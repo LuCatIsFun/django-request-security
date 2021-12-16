@@ -14,7 +14,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="django-request-security",
-    version="0.0.2",
+    version="0.0.3",
     author="liyao",
     author_email="liyao2598330@126.com",
     description="third-party libraries that enhance the security of the Django API",
