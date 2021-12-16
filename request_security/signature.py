@@ -13,6 +13,7 @@ from datetime import datetime
 from urllib.parse import unquote
 
 from django.core.cache import cache
+from django.http.request import RawPostDataException
 
 from request_security.settings import (
     SIGNATURE_METHOD,
@@ -131,7 +132,7 @@ def check_signature(request):
     post_parameters = request.POST.dict()
     try:
         body_parameters = json.loads(request.body.decode("utf-8")) if request.body else None
-    except json.decoder.JSONDecodeError:
+    except (json.decoder.JSONDecodeError, RawPostDataException):
         body_parameters = None
     log.info(
         "get_parameters, post_parameters, body_parameters=[%s, %s, %s]" % (
