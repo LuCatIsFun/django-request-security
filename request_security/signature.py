@@ -29,16 +29,21 @@ DELETE_KEY_MAP = [[], {}, None, '']
 logger = logging.getLogger("default")
 
 
+def get_sign(parameters):
+    # MD5加密
+    m = hashlib.md5()
+    m.update(parameters)
+    return m.hexdigest()
+
+
 def signature_parameters(nonce: str, parameters: list):
     parameters_str = ''.join(re.findall(r"[A-Za-z0-9]", "".join(parameters) + SIGNATURE_SECRET)) + \
                      nonce
     # 参数名ASCII码从小到大排序
     parameters_sort = "".join(sorted(list(parameters_str))).split("_")
     parameters_sort[0], parameters_sort[1] = parameters_sort[1], parameters_sort[0]
-    # MD5加密
-    m = hashlib.md5()
-    m.update("".join(parameters_sort).encode('UTF-8'))
-    return m.hexdigest()
+    return "".join(parameters_sort).encode('UTF-8')
+
 
 
 def check_pass_url_regular(path):
@@ -83,22 +88,31 @@ def check_signature(request):
     timestamp = request.META.get("HTTP_T")
     nonce = request.META.get("HTTP_N")
     sign = request.META.get("HTTP_S")
-
-    log = Log(debug=SIGNATURE_DEBUG)
+    request.debug = {
+        "message": 'success',
+        "nonce": False,
+        "timestamp": False,
+        "sort": None,
+        "parameters": None,
+        "sign": None
+    }
 
     log.info(("timestamp, nonce, sign=[%s, %s, %s]" % (timestamp, nonce, sign)))
 
     if not all([timestamp, nonce, sign]):
-        log.error("required parameter missing, no pass")
+        log.error('required parameter missing, no pass')
+        request.debug['message'] = "required parameter missing, no pass"
         return False
 
     # 判断cache是否正常
     if hasattr(cache, 'get') and hasattr(cache, 'set'):
         if cache.get(NONCE_CACHE_KEY.format(nonce=nonce)):
             log.error("nonce:%s repeat, no pass" % nonce)
+            request.debug['message'] = "nonce:%s repeat, no pass" % nonce
             return False
         else:
             cache.set(NONCE_CACHE_KEY.format(nonce=nonce), True, 300)
+            request.debug['nonce'] = True
     try:
         timestamp = int(timestamp)
     except:
@@ -110,6 +124,8 @@ def check_signature(request):
             now_timestamp + SIGNATURE_ALLOW_TIME_ERROR):
         log.error("request timestamp expired, not pass")
         return False
+    else:
+        request.debug['timestamp'] = True
 
     get_parameters = request.GET.dict()
     post_parameters = request.POST.dict()
@@ -122,10 +138,18 @@ def check_signature(request):
             get_parameters, post_parameters, body_parameters
         )
     )
-    parameters = handle_parameter(get_parameters,
-                                  post_parameters, body_parameters, str(timestamp))
+    parameters = handle_parameter(
+        get_parameters,
+        post_parameters,
+        body_parameters,
+        str(timestamp)
+    )
     log.info("after parameters process: %s" % parameters)
-    result = signature_parameters(nonce, parameters)
+    request.debug['parameters'] = parameters
+    parameters_sort = signature_parameters(nonce, parameters)
+    request.debug['sort'] = parameters_sort
+    result = get_sign(parameters_sort)
+    request.debug['sign'] = result
     log.info("get sign:%s, origin:%s -> %s" % (
         result, sign, result == sign
     ))

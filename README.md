@@ -102,6 +102,28 @@ class TestApi(ApiView):
 ```
 将忽略此函数get方法效验
 
+### 调试
+
+在初期进行调试无疑是最痛苦的阶段，你可以将参数`SIGNATURE_DEBUG`设置为`True`，在后端将会打印处理参数的日志，并且在request响应时增加对应的header头信息，提供信息如下
+
+```
+Access-Control-Allow-Origin: *
+allow: GET, POST, PUT, PATCH, DELETE, HEAD, OPTIONS
+connection: close
+content-language: zh-hans
+content-length: 83
+content-type: application/json
+Date: Thu, 16 Dec 2021 08:40:44 GMT
+
+## 新增以下header
+sign-1.nonce: True  # 重复性校验是否通过
+sign-2.timestamp: True   # 时间是否在允许的范围内
+sign-3.parameters: ['{"date": "2024", "_t": "1639644044077"}', '{}', '1639644044']    # 后端获取的参数
+sign-4.sort: abbcddefiiijklllmopqqrttttuvvwxz000000111222333334444444445556666778899CDDFFGGHIORUWWXY    # 后端针对参数的排序
+sign-5.result: d0553947cd518c47395db219ec430270     # 后端获得的签名
+sign-message: success       # 提示信息，如果是不通过，这里会显示具体原因
+```
+
 ### 参考
 
 * https://www.jianshu.com/p/ad410836587a

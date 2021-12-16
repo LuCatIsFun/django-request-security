@@ -14,13 +14,13 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="django-request-security",
-    version="0.0.1",
+    version="0.0.2",
     author="liyao",
     author_email="liyao2598330@126.com",
     description="third-party libraries that enhance the security of the Django API",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/liyao2598330/django-request-security",
+    url="https://github.com/lucatisfun/django-request-security",
     packages=setuptools.find_packages(),
     classifiers=[
         "Programming Language :: Python :: 3",
