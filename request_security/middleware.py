@@ -47,6 +47,7 @@ class RequestSignMiddleware(MiddlewareMixin):
 
     @staticmethod
     def process_response(request, response):
-        if SIGNATURE_DEBUG:
+        # ignore_sign_method not have debug attr
+        if hasattr(request, 'debug') and SIGNATURE_DEBUG:
             set_debug_header(request, response)
         return response
