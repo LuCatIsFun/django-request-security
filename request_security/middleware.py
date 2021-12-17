@@ -11,14 +11,26 @@ from django.utils.module_loading import import_string
 from request_security.signature import check_signature, log
 from request_security.settings import SIGNATURE_RESPONSE, ENABLE_REQUEST_SIGNATURE, SIGNATURE_DEBUG
 
+DEBUG_HEADER_MAP = {
+    'sign-message': 'message',
+    'sign-1.nonce': 'nonce',
+    'sign-2.timestamp': 'timestamp',
+    'sign-3.parameters': 'parameters',
+    'sign-4.sort': 'sort',
+    'sign-5.result': 'sign'
+}
+
+DEBUG_HEADER_MAX_LENGTH = 512
+
 
 def set_debug_header(request, response):
-    response.setdefault('sign-message', request.debug.get('message'))
-    response.setdefault('sign-1.nonce', request.debug.get('nonce'))
-    response.setdefault('sign-2.timestamp', request.debug.get('timestamp'))
-    response.setdefault('sign-3.parameters', request.debug.get('parameters'))
-    response.setdefault('sign-4.sort', request.debug.get('sort'))
-    response.setdefault('sign-5.result', request.debug.get('sign'))
+    if hasattr(request, 'debug') and isinstance(request.debug, dict):
+        for item in DEBUG_HEADER_MAP:
+            if len(str(request.debug.get(DEBUG_HEADER_MAP[item], ''))) > DEBUG_HEADER_MAX_LENGTH:
+                value = 'pass set debug header, data too large.'
+            else:
+                value = request.debug.get(DEBUG_HEADER_MAP[item])
+            response.setdefault(item, value)
 
 
 class RequestSignMiddleware(MiddlewareMixin):
